@@ -51,7 +51,7 @@ setup(
     extras_require={
         'all': [
             'crewai>=0.19.0',
-            'pyautogen>=0.7.5',
+            'ag2>=0.7.5',
             'langchain>=0.1.0',
             'langchain-openai>=0.0.5'
         ]
