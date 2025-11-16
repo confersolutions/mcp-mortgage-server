@@ -1,214 +1,323 @@
-# MCP Server (Mortgage Comparison Platform)
+# MCP Mortgage Server
 
-A FastAPI-based server that provides mortgage document parsing and comparison tools through a standardized API. The server is designed to be easily integrated with various AI frameworks including CrewAI, AutoGen, and LangChain.
+**A Model Context Protocol (MCP) server for parsing and analyzing mortgage documents (Loan Estimates & Closing Disclosures) using MISMO standards.**
 
-Currently implements a basic "hello" tool as a proof of concept, with mortgage document parsing tools coming soon.
-
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/confersolutions/mcp-mortgage-server/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/confersolutions/mcp-mortgage-server/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![MCP Protocol](https://img.shields.io/badge/MCP-2025--03--26-green.svg)](https://modelcontextprotocol.io)
 [![Website](https://img.shields.io/badge/Website-confersolutions.ai-blue)](https://confersolutions.ai)
 
-## Status
+---
 
-This is a beta release (v0.1.0) that provides:
-- Core server infrastructure with security features
-- Basic "hello" tool for testing framework integrations
-- Example integrations with CrewAI, AutoGen, and LangChain
+## 🎯 What is This?
 
-Future versions will add mortgage document parsing and comparison tools.
+This is a **Model Context Protocol (MCP) server** that allows AI assistants (like Claude Desktop, OpenAI Agents, etc.) to parse and analyze mortgage documents. It converts Loan Estimates (LE) and Closing Disclosures (CD) into structured MISMO-compliant JSON, and checks for TRID compliance violations.
 
-## Features
+### Key Features
 
-- FastAPI server with production-ready features:
-  - API key authentication
-  - Rate limiting support
-  - CORS middleware configuration
-- Framework integrations for AI agents:
-  - CrewAI
-  - AutoGen
-  - LangChain
-- Extensible architecture for adding mortgage parsing tools
-- Open source for transparency and community contributions
+✅ **MCP-Compliant** - Works natively with Claude Desktop, OpenAI Agents SDK, and other MCP clients
+✅ **Secure** - URL validation, SSRF prevention, file size limits, timeout protection
+✅ **Type-Safe** - Pydantic models ensure data validation
+✅ **TRID Compliance** - Automated tolerance checking (zero-tolerance, 10% tolerance)
+✅ **Resources** - Access to MISMO schemas and mortgage glossary
+✅ **Prompts** - Pre-built workflows for loan analysis
 
-## Quick Start
+---
 
-1. Clone the repository:
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.10 or higher
+- Claude Desktop (recommended) or another MCP-compatible client
+
+### Installation
+
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/confersolutions/mcp-mortgage-server.git
    cd mcp-mortgage-server
    ```
 
-## Roadmap
-
-- ✅ Core server infrastructure with security and rate limiting
-- ✅ Framework integrations (CrewAI, AutoGen, LangChain)
-- ✅ Basic tool implementation ("hello" endpoint)
-- 🚧 Loan Estimate (LE) parsing to MISMO format
-- 🚧 Closing Disclosure (CD) parsing
-- 🚧 Mortgage comparison tools
-- 🚧 Additional mortgage document analysis features
-
-## Installation
-
-1. Clone the repository
-2. Create a virtual environment:
+2. **Install dependencies**:
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install fastapi uvicorn slowapi python-dotenv
-   pip install crewai autogen langchain langchain-openai
+   pip install -r requirements.txt
    ```
 
-## Configuration
+3. **Test the server**:
+   ```bash
+   python test_server.py
+   ```
 
-Create a `.env` file in the root directory with the following variables:
+   You should see:
+   ```
+   ✓ All tests passed!
+   Server is ready for MCP client connections!
+   ```
 
-```env
-API_KEY=your_api_key_here
-RATE_LIMIT_PER_MINUTE=120
-ALLOWED_ORIGINS=http://localhost:3000
-HOST=0.0.0.0
-PORT=8001
-WORKERS=1
+### Usage with Claude Desktop
+
+1. **Locate your Claude Desktop config file**:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   - **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+2. **Add this server**:
+   ```json
+   {
+     "mcpServers": {
+       "mortgage": {
+         "command": "python",
+         "args": ["/full/path/to/mcp-mortgage-server/server.py"]
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop**
+
+4. **Use it in Claude**:
+   ```
+   Can you parse this loan estimate and summarize the key terms?
+   URL: https://storage.googleapis.com/mortgage-docs/sample-le.pdf
+   ```
+
+   Claude will automatically call the appropriate MCP tool and parse the document.
+
+---
+
+## 🛠️ Available Tools
+
+### 1. `hello`
+Simple connectivity test.
+
+```
+Input: { "name": "World" }
+Output: "Hello, World! MCP server is working correctly."
 ```
 
-## Running the Server
+### 2. `parse_loan_estimate`
+Parse a Loan Estimate PDF into MISMO-compliant JSON.
+
+**Input**:
+```json
+{
+  "pdf_url": "https://storage.googleapis.com/mortgage-docs/le-12345.pdf"
+}
+```
+
+**Output**:
+```json
+{
+  "loan_amount": 300000.0,
+  "interest_rate": 6.5,
+  "apr": 6.73,
+  "monthly_payment": 1896.20,
+  "total_closing_costs": 12000.00,
+  "origination_charges": 1500.00,
+  ...
+}
+```
+
+**Security**: Only HTTPS URLs from whitelisted domains. 10MB size limit, 30s timeout.
+
+### 3. `parse_closing_disclosure`
+Parse a Closing Disclosure PDF into MISMO-compliant JSON.
+
+Similar to `parse_loan_estimate` but for final closing documents.
+
+### 4. `compare_le_cd`
+Compare Loan Estimate vs Closing Disclosure for TRID compliance.
+
+**Input**:
+```json
+{
+  "loan_estimate_url": "https://storage.googleapis.com/docs/le.pdf",
+  "closing_disclosure_url": "https://storage.googleapis.com/docs/cd.pdf"
+}
+```
+
+**Output**:
+```json
+{
+  "is_compliant": false,
+  "violations": [
+    {
+      "type": "zero_tolerance",
+      "fee": "Origination Charges",
+      "le_amount": 1500.00,
+      "cd_amount": 1600.00,
+      "amount_over": 100.00,
+      "description": "Origination Charges increased by $100.00"
+    }
+  ],
+  "summary": "✗ NOT COMPLIANT: 1 violation(s) found"
+}
+```
+
+---
+
+## 📚 Resources
+
+The server provides read-only resources:
+
+- `mortgage://schemas/mismo-le` - MISMO 3.4 Loan Estimate schema
+- `mortgage://schemas/mismo-cd` - MISMO 3.4 Closing Disclosure schema
+- `mortgage://glossary/terms` - Mortgage terminology definitions
+
+---
+
+## 💡 Prompts
+
+Pre-built workflows:
+
+### `analyze_loan_estimate`
+
+**Arguments**: `{ "analysis_type": "comprehensive" }`
+
+**Types**: `quick`, `comprehensive`, `compliance`
+
+---
+
+## 🔒 Security
+
+### Built-in Protections
+
+- ✅ **HTTPS only** - HTTP URLs are rejected
+- ✅ **Domain whitelist** - Only approved storage domains (prevents SSRF attacks)
+- ✅ **File size limits** - 10MB maximum
+- ✅ **Timeout protection** - 30-second download timeout
+- ✅ **PDF validation** - Checks magic bytes
+- ✅ **Type safety** - All inputs/outputs validated with Pydantic
+
+### Allowed Domains
+
+By default:
+- `storage.googleapis.com`
+- `s3.amazonaws.com`
+- `mortgage-docs.confer.ai`
+
+To add more, set `ALLOWED_DOMAINS` environment variable.
+
+---
+
+## 🧪 Development
+
+### Run Tests
 
 ```bash
-python server.py
+# Quick test suite
+python test_server.py
+
+# Full pytest suite
+pytest tests/ -v
 ```
 
-The server will start on http://localhost:8001 by default.
+### Test with MCP Inspector
 
-## API Endpoints
-
-### Health Check
-```
-GET /health
-Response: {"status": "healthy"}
+```bash
+npm install -g @modelcontextprotocol/inspector
+npx @modelcontextprotocol/inspector python server.py
 ```
 
-### List Available Tools
-```
-GET /tools
-Headers: X-API-Key: your_api_key_here
-Response: List of available tools and their configurations
-```
+---
 
-### Call Tool
-```
-POST /call
-Headers: X-API-Key: your_api_key_here
-Body: {
-    "tool": "hello",
-    "input": {
-        "name": "World"  // Optional
-    }
-}
-Response: {
-    "output": "Hello, World!"
-}
-```
+## 📈 Roadmap
 
-## Framework Integration Examples
+### ✅ v2.0.0 (Current)
+- Modern MCP protocol implementation
+- Basic tool definitions with stub data
+- Security controls
+- Resources and prompts
+- Type-safe data models
 
-See `examples/test_all_integrations.py` for examples of how to use the server with:
-- CrewAI
-- AutoGen
-- LangChain
+### 🚧 v2.1.0 (In Progress)
+- Real PDF parsing (AI-powered or PyMuPDF)
+- Comprehensive test suite
+- Performance optimizations
 
-### CrewAI Example
-```python
-from crewai import Agent, Task, Crew
-from mcp_toolkit import MCPToolkitCrewAI
+### 🔮 v2.2.0 (Planned)
+- Streaming support
+- Progress notifications
+- Background task queue
+- Additional mortgage analysis tools
 
-toolkit = MCPToolkitCrewAI()
-tools = await toolkit.get_tools()
+---
 
-agent = Agent(
-    role="Greeter",
-    goal="Say hello to the user",
-    tools=tools
-)
+## 🔄 Migrating from v0.1.0
 
-task = Task(
-    description="Say hello to the user",
-    agent=agent
-)
+If upgrading from the old REST API version:
+- See **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Step-by-step instructions
+- See **[MODERNIZATION_SUMMARY.md](MODERNIZATION_SUMMARY.md)** - Analysis of changes
 
-crew = Crew(
-    agents=[agent],
-    tasks=[task]
-)
+**Key Changes**:
+- ❌ Removed FastAPI/HTTP REST API
+- ✅ Added MCP protocol (JSON-RPC 2.0 via stdio)
+- ✅ Removed API key authentication
+- ✅ Added type-safe tool definitions
+- ✅ Added resources and prompts
 
-result = await crew.kickoff()
-```
+---
 
-### AutoGen Example
-```python
-from autogen import AssistantAgent, UserProxyAgent
-from mcp_toolkit import MCPToolkitAutoGen
+## 📖 Documentation
 
-toolkit = MCPToolkitAutoGen()
-tools = await toolkit.get_tools()
+- **[MCP Specification](https://modelcontextprotocol.io/specification/2025-03-26)** - Official protocol spec
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Detailed migration instructions
+- **[MODERNIZATION_SUMMARY.md](MODERNIZATION_SUMMARY.md)** - Modernization analysis
 
-assistant = AssistantAgent(
-    name="assistant",
-    llm_config={"tools": tools}
-)
+---
 
-user_proxy = UserProxyAgent(
-    name="user_proxy",
-    code_execution_config={"use_docker": False}
-)
+## 🤝 Contributing
 
-await user_proxy.initiate_chat(assistant, message="Please say hello to Alice")
-```
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### LangChain Example
-```python
-from langchain.agents import Tool, AgentExecutor, create_react_agent
-from langchain_openai import ChatOpenAI
-from mcp_toolkit import MCPToolkitLangChain
+---
 
-toolkit = MCPToolkitLangChain()
-tools = [
-    Tool(
-        name="hello",
-        func=lambda x: asyncio.get_event_loop().run_until_complete(toolkit.hello(name=x)),
-        description="A tool that says hello to someone",
-        return_direct=True
-    )
-]
-
-llm = ChatOpenAI(temperature=0)
-agent = create_react_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools)
-
-result = await agent_executor.ainvoke({"input": "Please say hello to Bob"})
-```
-
-## Rate Limiting
-
-The server implements rate limiting using `slowapi`. By default, it's set to 120 requests per minute per IP address. This can be configured using the `RATE_LIMIT_PER_MINUTE` environment variable.
-
-## Security
-
-- API key authentication is required for all endpoints except `/health`
-- CORS is configured to allow specific origins (set via `ALLOWED_ORIGINS` environment variable)
-- All exceptions are caught and returned with appropriate error messages
-
-## Contributing
-
-Feel free to open issues or submit pull requests for improvements.
-
-## About
-
-This project is maintained by [Confer Solutions](https://confersolutions.ai). For questions or support, contact us at info@confersolutions.ai.
-
-## License
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🏢 About
+
+Maintained by [Confer Solutions](https://confersolutions.ai)
+
+**Contact**: info@confersolutions.ai
+
+---
+
+## ⭐ Changelog
+
+### v2.0.0 (2025-11-16) - Modern MCP Protocol
+
+**Major Rewrite**: Complete architectural modernization to MCP specification 2025-03-26.
+
+**Added**:
+- MCP protocol support (JSON-RPC 2.0 via stdio)
+- Four tools: hello, parse_loan_estimate, parse_closing_disclosure, compare_le_cd
+- Resources: MISMO schemas, mortgage glossary
+- Prompts: analyze_loan_estimate
+- Security: URL validation, SSRF prevention, size limits
+- Type safety: Pydantic models
+
+**Removed**:
+- FastAPI/HTTP REST API
+- API key authentication
+- Rate limiting
+- Static JSON configuration
+
+**Changed**:
+- Server: FastAPI → Official MCP SDK
+- Transport: HTTP → stdio
+- Dependencies: 15+ → 6 core packages
+
+### v0.1.0 (2024-04-12) - Initial Release
+
+**Deprecated**: REST API version. Use v2.0.0+.
+
+---
+
+**Status**: ✅ Active Development | 🏗️ Beta | 📦 Production-Ready Core
+
+**Last Updated**: November 16, 2025
