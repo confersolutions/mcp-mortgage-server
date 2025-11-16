@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mortgage-parser": {
+      "command": "python",
+      "args": [
+        "/home/user/mcp-mortgage-server/server.modern.py"
+      ],
+      "env": {
+        "ALLOWED_DOMAINS": "storage.googleapis.com,s3.amazonaws.com,mortgage-docs.confer.ai",
+        "MAX_PDF_SIZE": "10485760",
+        "DOWNLOAD_TIMEOUT": "30"
+      }
+    }
+  }
+}
