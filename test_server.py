@@ -95,10 +95,7 @@ async def test_data_models():
     # Test validation - too small loan
     try:
         bad_le = MISMOLoanEstimate(
-            loan_amount=500,  # Too small
-            interest_rate=6.5,
-            apr=6.73,
-            monthly_payment=100
+            loan_amount=500, interest_rate=6.5, apr=6.73, monthly_payment=100  # Too small
         )
         print("✗ Should have rejected small loan amount")
     except ValueError:
@@ -107,11 +104,9 @@ async def test_data_models():
     # Test validation - invalid interest rate
     try:
         from pydantic import ValidationError
+
         bad_le = MISMOLoanEstimate(
-            loan_amount=300000,
-            interest_rate=150,  # > 100%
-            apr=6.73,
-            monthly_payment=1896
+            loan_amount=300000, interest_rate=150, apr=6.73, monthly_payment=1896  # > 100%
         )
         print("✗ Should have rejected invalid interest rate")
     except ValidationError:
@@ -120,7 +115,7 @@ async def test_data_models():
 
 async def main():
     """Run all tests"""
-    print("="  * 60)
+    print("=" * 60)
     print("MCP Mortgage Server - Quick Test Suite")
     print("=" * 60)
 
@@ -142,6 +137,7 @@ async def main():
     except Exception as e:
         print(f"\n✗ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
